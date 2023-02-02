@@ -174,45 +174,41 @@ namespace Ga
                 std::uniform_int_distribution<int> dist(0, this->inputSize-1);
                 int pos1 = dist(mt);
                 int pos2 = dist(mt);
-                //std::cout<<pos1<<" "<<pos2<<std::endl;
                 int aux = path[pos1]; 
                 path[pos1] = path[pos2]; 
                 path[pos2] = aux;
-                //std::cout<<"executandoMutacao"<<std::endl;
-                
-    
             }
             
-            void cX(std::vector<int> path1, std::vector<int> path2){
-    
-                std::vector<int> result1; 
-                std::vector<int> result2; 
 
-                result1 = path2;
-                int idx = 0; 
-                do{
-                    result1[idx] = path1[idx]; 
-                    idx = this->getIndex(path2, result1[idx]);
-                   
+            void orderCrossover(const std::vector<int>& p1, const std::vector<int>& p2) {
+                int n = p1.size();
+                std::mt19937 rng(std::random_device{}());
+                std::uniform_int_distribution<int> dist(0, n-1);
+                int a = dist(rng), b = dist(rng);
+                if (a > b) std::swap(a, b);
 
+                std::vector<int> c1(p1.begin()+a, p1.begin()+b+1);
+                std::vector<int> c2(p2.begin()+a, p2.begin()+b+1);
+
+                for (int i : p2) {
+                    if (std::find(c1.begin(), c1.end(), i) == c1.end()) {
+                        c1.push_back(i);
+                    }
                 }
-                while(idx != 0 and idx != -1);
 
-                result2 = path1;
-                idx = 0; 
-                do{
-                    result2[idx] = path2[idx]; 
-                    idx = this->getIndex(path1, result2[idx]);
-                
+                for (int i : p1) {
+                    if (std::find(c2.begin(), c2.end(), i) == c2.end()) {
+                        c2.push_back(i);
+                    }
                 }
-                while(idx != 0 and idx != -1);
 
-                if (this->pathValue(result1) < this->pathValue(result2)){
-                    this->result = result1;
+            
+                if (this->pathValue(c1) < this->pathValue(c2)){
+                    this->result = c1;
                 }else{
-                    this->result = result2;
+                    this->result = c2;
                 }
-                
+
             }
 
             void populationMaintenance(){
@@ -261,10 +257,11 @@ namespace Ga
                 {
                     int pathIdx1 = this->rouletteSelection();
                     int pathIdx2 = this->rouletteSelection();
+            
                     while(pathIdx1 == pathIdx2){
                         pathIdx2 = this->rouletteSelection();
                     }
-                    this->cX(this->population[pathIdx1], this->population[pathIdx2]);
+                    this->orderCrossover(this->population[pathIdx1], this->population[pathIdx2]);
                     float mut = dist(mt);
                     if(mut<= this->mutationRate)
                         this->mutation(this->result);
