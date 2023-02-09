@@ -1,4 +1,4 @@
-#include<iostream>
+#include <iostream>
 #include "utils.cpp"
 
 /*
@@ -11,12 +11,12 @@ e substituindo pelo melhor filho gerado
 -Critério de parada: número de gerações
 */
 
-
-int main(int argc, char **argv){
-    //TODO:fazer com que os parametros principais sejam passados por comandline
-    //taxa de mutacao
-    //numero de geracoes
-    //numero de individuos por geracao
+int main(int argc, char **argv)
+{
+    // TODO:fazer com que os parametros principais sejam passados por comandline
+    // taxa de mutacao
+    // numero de geracoes
+    // numero de individuos por geracao
     std::string inputFile = argv[1];
     int numeroDeGeracoes = std::stoi(argv[2]);
     int numeroDeIndividuos = std::stoi(argv[3]);
@@ -24,9 +24,8 @@ int main(int argc, char **argv){
     std::string path = "./Input/" + inputFile;
     fileReader::Reader entrada(path);
     entrada.readFile();
-    Ga::Genetic genetico(taxaDeMutacao, numeroDeGeracoes, entrada.get_cityPoints() , entrada.get_inputSize(), numeroDeIndividuos, "outputFile.txt");
+    Ga::Genetic genetico(taxaDeMutacao, numeroDeGeracoes, entrada.get_cityPoints(), entrada.get_inputSize(), numeroDeIndividuos, "outputFile.txt");
     genetico.run();
 
-    
-    return 0 ;
+    return 0;
 }
