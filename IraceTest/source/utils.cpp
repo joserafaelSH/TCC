@@ -120,7 +120,7 @@ namespace Ga
 
             void calculateFitness(){
                 for(int i = 0; i< this->popSize; i++){
-                    this->fitness.push_back(1.0/this->pathValue(this->population[i]));
+                    this->fitness[i] = (1.0/this->pathValue(this->population[i]));
                 }   
             }
             
@@ -201,7 +201,6 @@ namespace Ga
                     }
                 }
 
-            
                 if (this->pathValue(c1) < this->pathValue(c2)){
                     this->result = c1;
                 }else{
@@ -222,44 +221,15 @@ namespace Ga
       
             void mostrarPopulacao(){
                 for(auto& row: this->population){
+                    int res = this->pathValue(std::vector<int>(row));
                     for(auto& col:row){
                         std::cout<<col<<" ";
                     }
+                    std::cout<<" "<<res;
                     std::cout<<"\n";
                 }
             }
-
-            int randomInt(int min, int max)
-            {
-                static std::default_random_engine e;
-                std::uniform_int_distribution<int> d(min, max);
-                return d(e);
-            }
-
-            void twoPointCrossover(const std::vector<int> &p1, const std::vector<int> &p2)
-            {
-                int size = p1.size();
-                int cutPoint1 = randomInt(0, size - 1);
-                int cutPoint2 = randomInt(cutPoint1, size - 1);
-
-                std::vector<int> offspring(size, 0);
-
-                // Copia a primeira seção da solução p1 para o filho
-                for (int i = 0; i < cutPoint1; i++)
-                    offspring[i] = p1[i];
-
-                // Copia a seção entre os pontos de corte de p2 para o filho
-                for (int i = cutPoint1; i < cutPoint2; i++)
-                    offspring[i] = p2[i];
-
-                // Copia a última seção da solução p1 para o filho
-                for (int i = cutPoint2; i < size; i++)
-                    offspring[i] = p1[i];
-
-                this->result = offspring;
-            }
-
-        public:
+                public:
             Genetic(){
             }
             
@@ -270,35 +240,52 @@ namespace Ga
                 this->popSize = popSize;
                 this->inputSize = inputSize;
                 this->outputFile = outputFile;
-                
+                this->fitness = std::vector<float>(popSize, 0.0);
             } 
             
             void run(){
+                
                 std::random_device rd;
                 std::mt19937 mt(rd());
                 std::uniform_real_distribution<double> dist(0.0, 1.0);
                 int gen = 0; 
                 this->createInitialPopulation();
                 this->calculateFitness();
-                
                 while (gen < this->nGenerations)
-                {
-                    int pathIdx1 = this->rouletteSelection();
-                    int pathIdx2 = this->rouletteSelection();
-            
-                    while(pathIdx1 == pathIdx2){
-                        pathIdx2 = this->rouletteSelection();
+                {   
+                    int best = this->findBestFit();
+                    //std::cout<<this->pathValue(this->population[best])<<std::endl; 
+                    std::vector<int> bestPath = this->population[best];
+                    std::vector<std::vector<int>> newPopulation;
+                    newPopulation.push_back(bestPath);
+
+                    while (newPopulation.size() < this->popSize)
+                    {
+                        int pathIdx1 = this->rouletteSelection();
+                        int pathIdx2 = this->rouletteSelection();
+                        while(pathIdx1 == pathIdx2){
+                            pathIdx2 = this->rouletteSelection();
+                        }
+                        //std::cout<<pathIdx1<<" "<<pathIdx2<<std::endl;
+                        this->orderCrossover(this->population[pathIdx1], this->population[pathIdx2]);
+                        float mut = dist(mt);
+                        if(mut<= this->mutationRate)
+                            this->mutation(this->result);
+
+                        if(this->validatePath(this->result)){
+                            newPopulation.push_back(this->result);
+                        }
+                        
                     }
-                    this->twoPointCrossover(this->population[pathIdx1], this->population[pathIdx2]);
-                    float mut = dist(mt);
-                    if(mut<= this->mutationRate)
-                        this->mutation(this->result);
-                    
-                    this->populationMaintenance();
+                    this->population = newPopulation;
+            
+                    this->calculateFitness();
                     gen+=1;
+                       
                 }
                 int best = this->findBestFit();
-                std::cout<<this->pathValue(this->population[best])<<std::endl;    
+                std::cout<<this->pathValue(this->population[best])<<std::endl; 
+                
             }
     };
     
@@ -352,10 +339,6 @@ namespace fileReader
                 }
                 arquivo.close();
             }
-
-            
-
-
 
             void showCityPoints(){
                 for(auto city : this->cityPoints)
